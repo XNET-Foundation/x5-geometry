@@ -1,0 +1,24 @@
+{
+    "name": "xnet-geometry",
+    "version": "1.0.0",
+    "description": "Geometry and word processing utilities for XNet",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "prepare": "npm run build",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "geometry",
+        "geojson",
+        "words",
+        "indexing"
+    ],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "typescript": "^5.3.3",
+        "@types/node": "^20.11.19"
+    }
+}
