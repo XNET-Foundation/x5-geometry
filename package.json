@@ -1,5 +1,5 @@
 {
-    "name": "xnet-geometry",
+    "name": "xnet-geometry-dev",
     "version": "1.0.0",
     "description": "Geometry and word processing utilities for XNet",
     "main": "dist/index.js",
