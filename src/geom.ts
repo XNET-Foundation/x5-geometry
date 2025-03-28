@@ -99,18 +99,64 @@ function vec2scale(v1: Vector2D, a: number): Vector2D {
     return [v1[0]*a,v1[1]*a];
 }
 
-// Helper function to decode GPS coordinates from packed string format
-function decodeGPS(packed: string): LatLon {
-    // Convert packed string to number and decode into a,b,c components
-    const idx = parseInt(packed, 36); // Base 36 for compact string representation
-    const [a, b, c] = idx2abc(idx);
+// Helper function to normalize latitude and longitude
+function normalizeLatLon(lat: number, lon: number, maxLat: number = 70): LatLon {
+    // Normalize longitude to [-180, 180]
+    lon = ((lon + 180) % 360) - 180;
     
-    // Convert a,b,c components to lat/lon
-    // This is a simplified conversion - adjust the scaling factors as needed
-    const lat = (a - 1024) * 0.1; // Scale factor for latitude
-    const lon = (b - 512) * 0.1;  // Scale factor for longitude
+    // Normalize latitude to [-maxLat, maxLat]
+    lat = lat > 0 ? 
+        (lat + maxLat) % (2 * maxLat) - maxLat :
+        (lat - maxLat) % (2 * maxLat) + maxLat;
+        
+    // Clamp latitude to [-maxLat, maxLat]
+    lat = Math.max(-maxLat, Math.min(maxLat, lat));
     
     return [lat, lon];
+}
+
+// Helper function to validate lat/lon coordinates
+function validateLatLon(lat: number, lon: number, maxLat: number = 70): void {
+    if (lat < -maxLat || lat > maxLat) {
+        throw new Error(`Latitude must be between -${maxLat}° and ${maxLat}°`);
+    }
+    if (lon < -180 || lon > 180) {
+        throw new Error('Longitude must be between -180° and 180°');
+    }
+}
+
+// Helper function to encode GPS coordinates into a packed string format
+function encodeGPS(lat: number, lon: number, maxLat: number = 70, step: number = 0.01, offset: number = 13034): string {
+    // Validate input coordinates
+    validateLatLon(lat, lon, maxLat);
+    
+    // Normalize coordinates
+    [lat, lon] = normalizeLatLon(lat, lon, maxLat);
+    
+    // Convert lat/lon to grid coordinates
+    const grid = latLon2grid(lat, lon, maxLat, step, offset);
+    
+    // Pack grid coordinates into a single number
+    const packed = (grid[0] << 16) | grid[1];
+    
+    // Convert to base-36 for compact string representation
+    return packed.toString(36);
+}
+
+// Helper function to decode GPS coordinates from packed string format
+function decodeGPS(packed: string, maxLat: number = 70, step: number = 0.01, offset: number = 13034): LatLon {
+    // Convert base-36 string back to number
+    const packedNum = parseInt(packed, 36);
+    
+    // Unpack grid coordinates
+    const i = (packedNum >> 16) & 0xFFFF;
+    const j = packedNum & 0xFFFF;
+    
+    // Convert grid coordinates to lat/lon
+    const [lat, lon] = grid2latLon(i, j, maxLat, step, offset);
+    
+    // Normalize and return coordinates
+    return normalizeLatLon(lat, lon, maxLat);
 }
 
 // move rendered verticies a bit towards the geometric center of a
@@ -249,6 +295,10 @@ export {
     travel,
     gpsDiff,
     sigmaTest,
+    encodeGPS,
+    decodeGPS,
+    normalizeLatLon,
+    validateLatLon,
     vec2add,
     vec2scale,
     latLon2ab,

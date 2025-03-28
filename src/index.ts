@@ -69,4 +69,8 @@ export type {
     GridIndex,
     ABCIndex,
     WordMap
-} from './types'; 
+} from './types';
+
+// Re-export all public functions from geom.ts and words2index.ts
+export * from './geom';
+export * from './words2index'; 
