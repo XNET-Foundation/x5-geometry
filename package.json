@@ -1,5 +1,5 @@
 {
-    "name": "xnet-geometry-dev",
+    "name": "x5-geometry",
     "version": "1.0.0",
     "description": "Geometry and word processing utilities for XNet",
     "main": "dist/index.js",
@@ -7,7 +7,8 @@
     "files": [
         "dist",
         "README.md",
-        "LICENSE"
+        "LICENSE",
+        "tsconfig.json"
     ],
     "scripts": {
         "build": "tsc",
