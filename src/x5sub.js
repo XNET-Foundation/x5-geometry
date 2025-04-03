@@ -17,6 +17,9 @@ function getHexSubdivisionIndices(point, hexVertices) {
             throw new Error('Each vertex must have numeric x and y coordinates.');
         }
     }
+    // Reorder hex vertices to ensure the first vertex is the rightmost one
+    // This is important for consistent triangle subdivision indexing
+    hexVertices = reorderVerticies(hexVertices);
 
     // Step 1: Compute the centroid and subdivide the hex into 6 triangles
     const { vertices: level1Vertices, triangles: level1Triangles } = subdivideHexToTriangles(hexVertices);
@@ -27,8 +30,8 @@ function getHexSubdivisionIndices(point, hexVertices) {
         const [v0, v1, v2] = level1Triangles[i].map(idx => level1Vertices[idx]);
         if (isPointInsideTriangle(point, v0, v1, v2, true)) {
             level1Index = i + 1; // Map to indices 1–6
-            break;
-        }
+                break;
+            }
     }
 
     // If the point is outside all triangles, it's outside the hex
@@ -38,21 +41,23 @@ function getHexSubdivisionIndices(point, hexVertices) {
 
     // Step 3: Subdivide the containing triangle (Level 2: indices 7–30)
     const level1Triangle = level1Triangles[level1Index - 1].map(idx => level1Vertices[idx]);
-    const { vertices: level2Vertices, triangles: level2Triangles, baseOrientation } = subdivideTriangle(level1Triangle);
+        const { vertices: level2Vertices, triangles: level2Triangles} = subdivideTriangle(level1Triangle);
 
     // Find which second-level triangle contains the point
     let level2Index = -1;
+    let level2Triangle = []
     for (let i = 0; i < level2Triangles.length; i++) {
         const [v0, v1, v2] = level2Triangles[i].map(idx => level2Vertices[idx]);
         if (isPointInsideTriangle(point, v0, v1, v2, true)) {
             level2Index = 7 + (level1Index - 1) * 4 + i; // Map to indices 7–30
+            level2Triangle = [v0, v1, v2];
             break;
         }
     }
 
     // Step 4: Subdivide the second-level triangle (Level 3: indices 31–126)
-    const level2Triangle = level2Triangles[level2Index - 7 - (level1Index - 1) * 4].map(idx => level2Vertices[idx]);
     const { vertices: level3Vertices, triangles: level3Triangles } = subdivideTriangle(level2Triangle);
+
 
     // Find which third-level triangle contains the point
     let level3Index = -1;
@@ -67,6 +72,112 @@ function getHexSubdivisionIndices(point, hexVertices) {
     // Return the full path of indices
     return [0, level1Index, level2Index, level3Index];
 }
+
+function hexIndexToIndexArray(hexIndex) {
+    // Convert hex index to index array
+    // The hexagon is divided into 6 triangles, each triangle is subdivided into 4 smaller triangles
+    // The first level has 6 triangles, the second level has 24 triangles (4 for each of the 6 triangles),
+    // and the third level has 96 triangles (4 for each of the 24 triangles)
+    // The hex index is 0–126, and the index array is 0–5 for the first level,
+    // 7–30 for the second level, and 31–126 for the third level
+
+    // Check if the hexIndex is valid
+    if (hexIndex < 0 || hexIndex > 126) {
+        throw new Error('Hex index must be between 0 and 126.');
+    }
+    if(hexIndex === 0) {
+        return [0];
+    }
+    if(hexIndex < 7) {
+        const level1Index = hexIndex - 1; // Map to indices 0–5
+        return [0, level1Index + 1];
+    }
+    if(hexIndex < 31) {
+        const level2Index = hexIndex - 7; // Map to indices 0–24
+        const level1Index = Math.floor(level2Index / 4); // Map to indices 0–5
+        return [0, level1Index + 1, level2Index + 7];
+    }
+    const level3Index = hexIndex - 31; // Map to indices 0–96
+    const level2Index = Math.floor(level3Index / 4); // Map to indices 0–24
+    const level1Index = Math.floor(level2Index / 4); // Map to indices 0–5
+    return [0, level1Index + 1, level2Index + 7, level3Index + 31];
+}
+
+function hexIndexToVertices(hexIndex, hexVertices) {
+    // Convert hex index to hex or triangle vertices
+    // The hexagon is divided into 6 triangles, each triangle is subdivided into 4 smaller triangles
+    // The first level has 6 triangles, the second level has 24 triangles (4 for each of the 6 triangles),
+    // and the third level has 96 triangles (4 for each of the 24 triangles)
+
+    // Check if the hexIndex is valid
+    if (hexIndex < 0 || hexIndex > 126) {
+        throw new Error('Hex index must be between 0 and 126.');
+    }
+    // Check if the hexVertices are valid
+    if (!Array.isArray(hexVertices) || hexVertices.length !== 6) {
+        throw new Error('Expected exactly 6 vertices for the hexagon.');
+    }
+    for (const vertex of hexVertices) {
+        if (typeof vertex.x !== 'number' || typeof vertex.y !== 'number') {
+            throw new Error('Each vertex must have numeric x and y coordinates.');
+        }
+    }
+    // Reorder hex vertices to ensure the first vertex is the rightmost one
+    // This is important for consistent triangle subdivision indexing
+    // This is done in the getHexSubdivisionIndices function
+    hexVertices = reorderVerticies(hexVertices);
+    indexArray = hexIndexToIndexArray(hexIndex);
+
+    // Step 1: Compute the centroid and subdivide the hex into 6 triangles
+    const { vertices: level1Vertices, triangles: level1Triangles } = subdivideHexToTriangles(hexVertices);
+    // Step 2: Find which first-level triangle contains the hexIndex
+    if(indexArray.length === 1) {
+        return hexVertices;
+    }
+    const level1Index = indexArray[1] - 1; // Map to indices 0–5
+    const level1Triangle = level1Triangles[level1Index].map(idx => level1Vertices[idx]);
+
+    if(indexArray.length === 2) {
+         return level1Triangle;
+    }
+
+    const level2Index = indexArray[2] - 7; // Map to indices 0–24
+    const level2IndexInTriangle = level2Index % 4; // Map to indices 0–3
+    const { vertices: level2Vertices, triangles: level2Triangles } = subdivideTriangle(level1Triangle);
+    const level2Triangle = level2Triangles[level2IndexInTriangle].map(idx => level2Vertices[idx]);
+
+    if(indexArray.length === 3) {
+        return level2Triangle;
+    }
+
+    const level3Index = indexArray[3] - 31; // Map to indices 0–96
+    const level3IndexInTriangle = level3Index % 4; // Map to indices 0–3
+    const { vertices: level3Vertices, triangles: level3Triangles } = subdivideTriangle(level2Triangle);
+    const level3Triangle = level3Triangles[level3IndexInTriangle].map(idx => level3Vertices[idx]);
+    return level3Triangle;
+}
+
+
+function reorderVerticies(hexVertices) {
+    // function to reorder the vertices of a polygon to ensure that the first vertex is the
+    // righmost one. If there are two vertices with the same x, the one with the
+    // lowest y is the first one.
+
+    let rightLower = hexVertices[0];
+    let indexj = 0;
+    for(let i = 1; i < hexVertices.length; i++) {
+        if (hexVertices[i].x > rightLower.x || hexVertices[i].x === rightLower.x && hexVertices[i].y < rightLower.y) {
+            rightLower = hexVertices[i];
+            indexj = i;
+        }}
+    // reorder the hex vertices
+    let newHexVertices = [];
+    for(let i = 0; i < hexVertices.length; i++) {
+        newHexVertices.push(hexVertices[(indexj + i) % hexVertices.length]);
+    }
+    return newHexVertices;
+}
+
 
 /**
  * Subdivides a hexagon into 6 triangles by connecting the centroid to each vertex.
@@ -99,9 +210,13 @@ function subdivideHexToTriangles(hexVertices) {
 /**
  * Subdivides a triangle into 4 smaller triangles.
  * @param {Array<Object>} triangleVertices - Three vertices of the triangle.
- * @returns {{vertices: Array<Object>, triangles: Array<Array<number>>, baseOrientation: string}}
+ * @returns {{vertices: Array<Object>, triangles: Array<Array<number>>}}
  */
 function subdivideTriangle(triangleVertices) {
+
+    // reorder the vertices to ensure that the first vertex is the rightmost one
+    triangleVertices = reorderVerticies(triangleVertices);
+
     // Compute midpoints of each edge
     const mid01 = {
         x: (triangleVertices[0].x + triangleVertices[1].x) / 2,
@@ -119,15 +234,6 @@ function subdivideTriangle(triangleVertices) {
     // New vertex list: original 3 + 3 midpoints
     const vertices = [...triangleVertices, mid01, mid12, mid20];
 
-    // Determine base orientation ("base down" or "base up")
-    // We'll assume the triangle is "base down" if vertex 0 to 1 is the longest edge
-    const edges = [
-        Math.hypot(triangleVertices[1].x - triangleVertices[0].x, triangleVertices[1].y - triangleVertices[0].y), // 0-1
-        Math.hypot(triangleVertices[2].x - triangleVertices[1].x, triangleVertices[2].y - triangleVertices[1].y), // 1-2
-        Math.hypot(triangleVertices[0].x - triangleVertices[2].x, triangleVertices[0].y - triangleVertices[2].y)  // 2-0
-    ];
-    const longestEdge = edges.indexOf(Math.max(...edges));
-    const baseOrientation = longestEdge === 0 ? 'baseDown' : 'baseUp';
 
     // Define the 4 sub-triangles
     // Indices: 0, 1, 2 are the original vertices; 3, 4, 5 are mid01, mid12, mid20
@@ -138,18 +244,8 @@ function subdivideTriangle(triangleVertices) {
         [5, 4, 2]  // Radial triangle 3
     ];
 
-    // Adjust ordering based on orientation and right-hand rule
-    if (baseOrientation === 'baseDown') {
-        // For "base down", 0-1 is the base, so radial triangles are ordered starting from 0-3-5
-        // Already in correct order: central (0), then 0-3-5 (1), 3-1-4 (2), 5-4-2 (3)
-    } else {
-        // For "base up", rotate the radial triangles to start from the top vertex
-        triangles[1] = [5, 4, 2]; // Radial 1
-        triangles[2] = [3, 1, 4]; // Radial 2
-        triangles[3] = [0, 3, 5]; // Radial 3
-    }
 
-    return { vertices, triangles, baseOrientation };
+    return { vertices, triangles };
 }
 
 /**
@@ -161,21 +257,28 @@ function subdivideTriangle(triangleVertices) {
  * @param {boolean} [includeBoundary=true] - Whether to include boundary points.
  * @returns {boolean} - True if the point is inside (or on) the triangle.
  */
-function isPointInsideTriangle(point, v0, v1, v2, includeBoundary = true) {
-    const dX = point.x - v2.x;
-    const dY = point.y - v2.y;
-    const dX21 = v2.x - v1.x;
-    const dY12 = v1.y - v2.y;
-    const dX02 = v0.x - v2.x;
-    const dY02 = v0.y - v2.y;
+function isPointInsideTriangle(point, v1, v2, v3, includeBoundary = true) {
+    // Extract coordinates for clarity
+    const x = point.x;
+    const y = point.y;
+    const x1 = v1.x;
+    const y1 = v1.y;
+    const x2 = v2.x;
+    const y2 = v2.y;
+    const x3 = v3.x;
+    const y3 = v3.y;
 
-    const D = dY12 * dX02 + dX21 * dY02;
-    if (D === 0) return false;
+    // calculate signed area
+    let D=(y2-y3)*(x1-x3) + (x3-x2)*(y1-y3);
 
-    const alpha = (dY12 * dX + dX21 * dY) / D;
-    const beta = (dY02 * dX + dX02 * dY) / D;
-    const gamma = 1.0 - alpha - beta;
-
+    if (Math.abs(D) < Number.EPSILON) {
+        return false;
+    }
+    // Calculate barycentric coordinates
+    let alpha = ((y2-y3)*(x-x3) + (x3-x2)*(y-y3)) / D;
+    let beta = ((y3-y1)*(x-x3) + (x1-x3)*(y-y3)) / D;
+    let gamma = 1.0 - alpha - beta;
+    // Check if point is inside the triangle using barycentric coordinates
     const threshold = includeBoundary ? 0 : Number.EPSILON;
     return alpha >= threshold && beta >= threshold && gamma >= threshold;
 }
@@ -193,3 +296,13 @@ function isPointInsideTriangle(point, v0, v1, v2, includeBoundary = true) {
 // const testPoint = { x: 0.5, y: 0.5 };
 // console.log(getHexSubdivisionIndices(testPoint, hexVertices)); // e.g., [0, 1, 7, 31]
 // console.log(getHexSubdivisionIndices({ x: 5, y: 5 }, hexVertices)); // false
+module.exports = {
+    getHexSubdivisionIndices,
+    hexIndexToIndexArray,
+    hexIndexToVertices,
+    reorderVerticies,
+    isPointInsideTriangle,
+    subdivideTriangle
+};
+
+//export { getHexSubdivisionIndices, isPointInsideTriangle, subdivideTriangle };
