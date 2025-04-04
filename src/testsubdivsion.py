@@ -61,12 +61,8 @@ def geometry():
             p1 = point(tri[0]['x'],tri[0]['y'])
             p2 = point(tri[1]['x'],tri[1]['y'])
             p3 = point(tri[2]['x'],tri[2]['y'])
-            l1 = line(p1,p2)
-            l2 = line(p2,p3)
-            l3 = line(p3,p1)
-            geom.append(l1)
-            geom.append(l2)
-            geom.append(l3)
+            poly = [ p1, p2, p3, p1 ]
+            geom.append(poly)
 
     print(f"length of geom: {len(geom)}")
     geom = scale(geom,10.0)
@@ -83,8 +79,36 @@ if __name__ == "__main__":
     ## make the geometry
     geomlist = geometry()
 
+    d.layer= '0'
+    d.pointstyle = 'xo' # set the point rendering style
+    geo = []
+    up=point(0,0,0.3)
+    for i in range(0,6):
+        geo.append(geomlist[i])
+    d.linecolor='white'
+    d.draw(geo)
+    dGl.linecolor='white'
+    dGl.draw(geo)
+    geo = []
+    for i in range(6,31):
+        geo.append(geomlist[i])
+    d.linecolor='yellow'
+    d.draw(geo)
+    dGl.linecolor='yellow'
+    d.draw(geo)
+    dGl.draw(translate(geo,up))
+    geo = []
+    up=point(0,0,0.6)
+    for i in range(31,126):
+        geo.append(geomlist[i])
+    d.linecolor='red'
+    d.draw(geo)
+    dGl.linecolor='red'
+    d.draw(geo)
+    dGl.draw(translate(geo,up))
+
     ## draw the geometry in DXF
-    drawGlist(geomlist,d)
+    #drawGlist(geomlist,d)
 
     ## add a dawing legend on the DXF drawing, in the DOCUMENTATION
     ## layer
