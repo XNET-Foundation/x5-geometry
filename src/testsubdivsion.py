@@ -79,10 +79,13 @@ if __name__ == "__main__":
     ## make the geometry
     geomlist = geometry()
 
+    up1=point(0,0,0.3)
+    up2=point(0,0,0.6)
+
     d.layer= '0'
-    d.pointstyle = 'xo' # set the point rendering style
+    d.pointstyle = 'xo'
+    # set the point rendering style
     geo = []
-    up=point(0,0,0.3)
     for i in range(0,6):
         geo.append(geomlist[i])
     d.linecolor='white'
@@ -90,22 +93,38 @@ if __name__ == "__main__":
     dGl.linecolor='white'
     dGl.draw(geo)
     geo = []
-    for i in range(6,31):
+    for i in range(6,30):
         geo.append(geomlist[i])
     d.linecolor='yellow'
     d.draw(geo)
     dGl.linecolor='yellow'
-    d.draw(geo)
-    dGl.draw(translate(geo,up))
+    dGl.draw(translate(geo,up1))
     geo = []
-    up=point(0,0,0.6)
-    for i in range(31,126):
+    for i in range(30,126):
         geo.append(geomlist[i])
     d.linecolor='red'
     d.draw(geo)
     dGl.linecolor='red'
-    d.draw(geo)
-    dGl.draw(translate(geo,up))
+    dGl.draw(translate(geo,up2))
+
+    for i in range(len(geomlist)):
+        t = geomlist[i]
+        p = add(add(t[0],t[1]),t[2])
+        p = scale3(p,1.0/3)
+        s = str(i+1)
+        if i < 6:
+            d.linecolor='white'
+            dGl.linecolor='white'
+        elif i <30:
+            d.linecolor='yellow'
+            dGl.linecolor='yellow'
+            p = add(p,up1)
+        else:
+            d.linecolor='red'
+            dGl.linecolor='red'
+            p = add(p,up2)
+        d.draw_text(s,p)
+        dGl.draw_text(s,p)
 
     ## draw the geometry in DXF
     #drawGlist(geomlist,d)
@@ -124,7 +143,6 @@ if __name__ == "__main__":
     legend(dGl)
 
     ## draw the geometry in OpenGL
-    drawGlist(geomlist,dGl)
 
     ## write out the DXF file as example1-out.dxf
     d.display()
