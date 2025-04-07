@@ -5,6 +5,7 @@
 # NOTE: this depends on the output of makegeom.js being run first, producing
 # foo.json as the output
 
+import subprocess
 import json
 
 from yapcad.ezdxf_drawable import *
@@ -50,19 +51,45 @@ def drawGlist(glist,d):
     d.linecolor = 1 # set color to red (DXF index color)
     d.draw(glist)
 
+## make geometry for drawing, and return it as a geometry list
+def run_node_script(script_path, args=None):
+    # Build the command
+    command = ['node', script_path]
+    if args:
+        command.extend(args)
+
+    # Execute the Node.js script and capture its output
+    result = subprocess.run(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=True  # Raises CalledProcessError if the script returns non-zero exit code
+    )
+
+    # Parse the JSON output
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON: {e}")
+        print(f"Output was: {result.stdout}")
+        print(f"Error output: {result.stderr}")
+        return None
+
 
 def geometry():
     geom = []
-    with open('foo.json') as f:
-        data = json.load(f)
-        print(f"length of data: {len(data)}")
-        for tri in data:
-            print(f"tri: {tri}")
-            p1 = point(tri[0]['x'],tri[0]['y'])
-            p2 = point(tri[1]['x'],tri[1]['y'])
-            p3 = point(tri[2]['x'],tri[2]['y'])
-            poly = [ p1, p2, p3, p1 ]
-            geom.append(poly)
+    # Run the Node.js script and get the output
+    script_path = 'makegeom.js'
+    data = run_node_script(script_path)
+    print(f"length of data: {len(data)}")
+    for tri in data:
+        print(f"tri: {tri}")
+        p1 = point(tri[0]['x'],tri[0]['y'])
+        p2 = point(tri[1]['x'],tri[1]['y'])
+        p3 = point(tri[2]['x'],tri[2]['y'])
+        poly = [ p1, p2, p3, p1 ]
+        geom.append(poly)
 
     print(f"length of geom: {len(geom)}")
     geom = scale(geom,10.0)
