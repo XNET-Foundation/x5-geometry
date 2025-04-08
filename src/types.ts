@@ -13,4 +13,15 @@ export type GridIndexExt = [number, number, number]; // subdivision
 export type ABCIndex = [number, number, number];
 export type ABCIndexExt = [number, number, number, number]; //subdivision
 export type WordMap = { [key: string]: number };
-export type WordMapExt = { [key: string]: number }; 
+export type WordMapExt = { [key: string]: number };
+
+// Geometry interfaces
+export interface Point {
+    x: number;
+    y: number;
+}
+
+export interface Triangle {
+    vertices: Point[];
+    triangles: number[][];
+} 

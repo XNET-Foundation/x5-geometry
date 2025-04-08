@@ -6,13 +6,15 @@ import * as adjectives from './adjectives';
 import * as nouns from './nouns';
 import * as geom from './geom';
 import * as words2index from './words2index';
+import * as x5sub from './x5sub';
 
 // Re-export all modules
 export {
     adjectives,
     nouns,
     geom,
-    words2index
+    words2index,
+    x5sub
 };
 
 // Re-export commonly used functions from adjectives
@@ -61,6 +63,18 @@ export const {
     string2ij
 } = words2index;
 
+// Re-export commonly used functions from x5sub
+export const {
+    getHexSubdivisionIndices,
+    hexIndexToIndexArray,
+    hexIndexToVertices,
+    reorderVerticies,
+    subdivideTriangle,
+    isPointInsideTriangle,
+    subdivideHexToTriangles,
+    sign
+} = x5sub;
+
 // Re-export types
 export type {
     LatLon,
@@ -68,9 +82,12 @@ export type {
     HexGrid,
     GridIndex,
     ABCIndex,
-    WordMap
+    WordMap,
+    Point,
+    Triangle
 } from './types';
 
-// Re-export all public functions from geom.ts and words2index.ts
+// Re-export all public functions from geom.ts, words2index.ts, and x5sub.ts
 export * from './geom';
-export * from './words2index'; 
+export * from './words2index';
+export * from './x5sub'; 
