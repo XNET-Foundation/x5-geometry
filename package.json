@@ -1,6 +1,6 @@
 {
     "name": "x5-geometry",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Geometry and word processing utilities for XNet",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
