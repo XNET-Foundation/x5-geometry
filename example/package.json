@@ -1,0 +1,19 @@
+{
+  "name": "testing-x5",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsc && node build/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "x5-geometry": "^1.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
