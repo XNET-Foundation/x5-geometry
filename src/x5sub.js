@@ -1,3 +1,5 @@
+geom = require('../dist/geom.js');
+
 /**
  * Tests if a point is inside a hexagon and returns the subdivision indices.
  * @param {Object} point - The point to test, {x: number, y: number}.
@@ -283,6 +285,23 @@ function isPointInsideTriangle(point, v1, v2, v3, includeBoundary = true) {
     return alpha >= threshold && beta >= threshold && gamma >= threshold;
 }
 
+function extGrid2latLonVertices(i, j, hexIndex) {
+    // This function will take an x5 i,j hex address and a hexIndex  and return the lat lon vertices of the
+    // hexagon or triangle that corresponds to the i,j address and hexIndex.
+    let hex = geom.grid2latLonHex(i,j);
+    hex = hex.map(lst => {return {x: lst[1], y: lst[0]};});
+    let vertices = hexIndexToVertices(hexIndex,hex);
+    vertices = vertices.map(lst => {return {lat: lst.y, lon: lst.x};});
+    return vertices;
+}
+
+function latLon2extGrid(lat, lon )  {
+    let [i,j] = geom.latLon2grid(lat,lon);
+    let hex = geom.grid2latLonHex(i,j);
+    hex = hex.map(lst => {return {x: lst[1], y: lst[0]};});
+    hexIndices = getHexSubdivisionIndices({x: lon, y: lat},hex);
+    return { i: i, j: j, hexIndices: hexIndices  };
+}
 // // Example usage:
 // const hexVertices = [
 //     { x: 0, y: 2 },
@@ -302,7 +321,10 @@ module.exports = {
     hexIndexToVertices,
     reorderVerticies,
     isPointInsideTriangle,
-    subdivideTriangle
+    subdivideTriangle,
+    extGrid2latLonVertices,
+    latLon2extGrid
+
 };
 
 //export { getHexSubdivisionIndices, isPointInsideTriangle, subdivideTriangle };
