@@ -17,7 +17,7 @@ This implementation is available as an npm package for use in TypeScript/JavaScr
 ### Installation
 
 ```bash
-npm install xnet-geometry
+npm install x5-geometry
 ```
 
 ### Usage
@@ -35,7 +35,7 @@ import {
     getNounIndex,
     ij2string,
     string2ij
-} from 'xnet-geometry';
+} from 'x5-geometry';
 
 // Calculate distance between two points
 const distance = haversine(lat1, lon1, lat2, lon2);
