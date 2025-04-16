@@ -1,7 +1,7 @@
 {
     "name": "x5-geometry",
     "version": "1.0.1",
-    "description": "Geometry and word processing utilities for XNet",
+    "description": "Geometry and word processing utilities for XNET",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "files": [
@@ -33,12 +33,12 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/xnet-mobile/x5-js.git"
+        "url": "git+https://github.com/XNET-Foundation/x5-geometry"
     },
     "bugs": {
-        "url": "https://github.com/xnet-mobile/x5-js/issues"
+        "url": "https://github.com/XNET-Foundation/x5-geometry/issues"
     },
-    "homepage": "https://github.com/xnet-mobile/x5-js#readme",
+    "homepage": "https://github.com/XNET-Foundation/x5-geometry#readme",
     "devDependencies": {
         "@babel/core": "^7.26.10",
         "@babel/preset-env": "^7.26.9",
